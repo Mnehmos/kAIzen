@@ -1,0 +1,73 @@
+# kAIzen Systems - GitHub Pages Deployment Commands
+# Copy and paste these commands in order
+
+# ============================================
+# STEP 1: Create GitHub Repository (Do this first!)
+# ============================================
+# 1. Go to: https://github.com/new
+# 2. Repository name: kaizen-systems
+# 3. Description: kAIzen Systems - Standardizing AI Workflows at Scale
+# 4. Select: Public
+# 5. Do NOT initialize with README, .gitignore, or license
+# 6. Click "Create repository"
+# 
+# Then come back here and continue with Step 2
+
+# ============================================
+# STEP 2: Link to GitHub
+# ============================================
+# Replace YOUR_USERNAME with your actual GitHub username
+
+git remote add origin https://github.com/YOUR_USERNAME/kaizen-systems.git
+
+# ============================================
+# STEP 3: Push to GitHub
+# ============================================
+
+git branch -M main
+git push -u origin main
+
+# ============================================
+# STEP 4: Enable GitHub Pages
+# ============================================
+# 1. Go to: https://github.com/YOUR_USERNAME/kaizen-systems/settings/pages
+# 2. Under "Source":
+#    - Branch: main
+#    - Folder: / (root)
+# 3. Click "Save"
+# 4. Wait 1-2 minutes
+# 5. Your site will be live at:
+#    https://YOUR_USERNAME.github.io/kaizen-systems/
+
+# ============================================
+# STEP 5: Set Up Supabase Database
+# ============================================
+# 1. Go to: https://supabase.com/dashboard/project/gotgnbwiodwkrsdmighy
+# 2. Click "SQL Editor" in left sidebar
+# 3. Click "New query"
+# 
+# Run these 3 scripts in order (copy/paste each, then click Run):
+# 
+# Script 1: supabase/schema.sql
+# Script 2: supabase/rls-policies.sql  
+# Script 3: supabase/seed-data.sql
+#
+# You should see "3 rows inserted" messages
+
+# ============================================
+# DONE! Your site is live! 🎉
+# ============================================
+# 
+# Website URL: https://YOUR_USERNAME.github.io/kaizen-systems/
+# 
+# Test these features:
+# ✓ Email signup
+# ✓ Newsletter archive (3 articles)
+# ✓ Technique library (3 techniques)
+# ✓ All pages load correctly
+#
+# Then share on:
+# - Twitter/X
+# - Reddit (r/LocalLLaMA, r/MachineLearning)
+# - HackerNews
+# - Discord/Slack communities
