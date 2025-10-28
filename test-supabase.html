@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Test - kAIzen Systems</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover { background: #5568d3; }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>🧪 Supabase Connection Test</h1>
+        <p>This page tests the Supabase client initialization and database connection.</p>
+        
+        <div id="results"></div>
+        
+        <button onclick="runTests()">Run Connection Tests</button>
+        <button onclick="location.href='index.html'">Back to Home</button>
+    </div>
+
+    <!-- Load Supabase from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        const SUPABASE_URL = 'https://gotgnbwiodwkrsdmighy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvdGduYndpb2R3a3JzZG1pZ2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MTg5ODksImV4cCI6MjA3NzE5NDk4OX0.vx9veq9fEmdXCMnQsmf4Qe-bYHtY7oH5fItqf3VO-UU';
+        
+        let client = null;
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        async function runTests() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            // Test 1: Check if Supabase library loaded
+            log('Test 1: Checking if Supabase library loaded...', 'info');
+            if (typeof supabase === 'undefined') {
+                log('❌ FAILED: Supabase library not found in global scope', 'error');
+                log('Available globals: ' + Object.keys(window).filter(k => k.toLowerCase().includes('supa')).join(', '), 'info');
+                return;
+            }
+            log('✅ PASSED: Supabase library loaded', 'success');
+            
+            // Test 2: Create client
+            log('Test 2: Creating Supabase client...', 'info');
+            try {
+                client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                log('✅ PASSED: Client created successfully', 'success');
+            } catch (err) {
+                log('❌ FAILED: ' + err.message, 'error');
+                return;
+            }
+            
+            // Test 3: Test database connection
+            log('Test 3: Testing database connection...', 'info');
+            try {
+                const { data, error } = await client
+                    .from('newsletter_issues')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    log('❌ FAILED: ' + error.message, 'error');
+                } else {
+                    log('✅ PASSED: Database connection successful', 'success');
+                }
+            } catch (err) {
+                log('❌ FAILED: ' + err.message, 'error');
+            }
+            
+            // Test 4: Fetch newsletter issues
+            log('Test 4: Fetching newsletter issues...', 'info');
+            try {
+                const { data: issues, error } = await client
+                    .from('newsletter_issues')
+                    .select('*')
+                    .order('publish_date', { ascending: false });
+                
+                if (error) {
+                    log('❌ FAILED: ' + error.message, 'error');
+                } else {
+                    log(`✅ PASSED: Retrieved ${issues.length} newsletter issues`, 'success');
+                    issues.forEach(issue => {
+                        log(`  - ${issue.title} (${issue.issue_number})`, 'info');
+                    });
+                }
+            } catch (err) {
+                log('❌ FAILED: ' + err.message, 'error');
+            }
+            
+            // Test 5: Fetch techniques
+            log('Test 5: Fetching techniques...', 'info');
+            try {
+                const { data: techniques, error } = await client
+                    .from('techniques')
+                    .select('*')
+                    .order('created_at', { ascending: false});
+                
+                if (error) {
+                    log('❌ FAILED: ' + error.message, 'error');
+                } else {
+                    log(`✅ PASSED: Retrieved ${techniques.length} techniques`, 'success');
+                    techniques.forEach(tech => {
+                        log(`  - ${tech.name} (${tech.technique_id})`, 'info');
+                    });
+                }
+            } catch (err) {
+                log('❌ FAILED: ' + err.message, 'error');
+            }
+            
+            log('=== All Tests Complete ===', 'success');
+        }
+        
+        // Auto-run tests on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runTests, 500); // Wait for library to fully load
+        });
+    </script>
+</body>
+</html>
