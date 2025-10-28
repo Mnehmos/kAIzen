@@ -3,28 +3,53 @@
 const SUPABASE_URL = 'https://gotgnbwiodwkrsdmighy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvdGduYndpb2R3a3JzZG1pZ2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MTg5ODksImV4cCI6MjA3NzE5NDk4OX0.vx9veq9fEmdXCMnQsmf4Qe-bYHtY7oH5fItqf3VO-UU';
 
-// Initialize Supabase client
-let supabase = null;
+// Initialize Supabase client - wait for library to load
+let supabaseClient = null;
 
-// Check if we're running in browser with Supabase loaded
-if (typeof window !== 'undefined' && window.supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} else {
-    console.warn('Supabase client library not loaded. Please include it in your HTML.');
+// Initialize when DOM is ready
+function initializeSupabase() {
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client initialized successfully');
+        return true;
+    } else {
+        console.error('❌ Supabase library not found. Make sure CDN script is loaded.');
+        return false;
+    }
 }
 
-// Export for use in other modules
-export { supabase };
+// Try to initialize immediately if library is already loaded
+if (typeof supabase !== 'undefined') {
+    initializeSupabase();
+}
+
+// Also try when DOM is ready (in case library loads after this script)
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+        if (!supabaseClient) {
+            initializeSupabase();
+        }
+    });
+}
+
+// Export client getter
+export function getSupabaseClient() {
+    if (!supabaseClient) {
+        initializeSupabase();
+    }
+    return supabaseClient;
+}
 
 // Email subscription function
 export async function subscribeEmail(email) {
-    if (!supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
         console.error('Supabase client not initialized');
         return { success: false, error: 'Database connection not available' };
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from('subscribers')
             .insert([{ 
                 email: email, 
@@ -54,13 +79,14 @@ export async function subscribeEmail(email) {
 
 // Get newsletter issues
 export async function getNewsletterIssues(limit = null) {
-    if (!supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
         console.error('Supabase client not initialized');
         return { data: null, error: 'Database connection not available' };
     }
 
     try {
-        let query = supabase
+        let query = client
             .from('newsletter_issues')
             .select('*')
             .order('publish_date', { ascending: false });
@@ -85,13 +111,14 @@ export async function getNewsletterIssues(limit = null) {
 
 // Get single newsletter issue
 export async function getNewsletterIssue(id) {
-    if (!supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
         console.error('Supabase client not initialized');
         return { data: null, error: 'Database connection not available' };
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from('newsletter_issues')
             .select('*')
             .eq('id', id)
@@ -111,13 +138,14 @@ export async function getNewsletterIssue(id) {
 
 // Get techniques
 export async function getTechniques(filters = {}) {
-    if (!supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
         console.error('Supabase client not initialized');
         return { data: null, error: 'Database connection not available' };
     }
 
     try {
-        let query = supabase
+        let query = client
             .from('techniques')
             .select('*')
             .order('created_at', { ascending: false });
@@ -149,13 +177,14 @@ export async function getTechniques(filters = {}) {
 
 // Get single technique
 export async function getTechnique(id) {
-    if (!supabase) {
+    const client = getSupabaseClient();
+    if (!client) {
         console.error('Supabase client not initialized');
         return { data: null, error: 'Database connection not available' };
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from('techniques')
             .select('*')
             .eq('id', id)
@@ -175,10 +204,11 @@ export async function getTechnique(id) {
 
 // Track page view (simple analytics)
 export async function trackPageView(pagePath) {
-    if (!supabase) return;
+    const client = getSupabaseClient();
+    if (!client) return;
 
     try {
-        await supabase.from('page_views').insert([{
+        await client.from('page_views').insert([{
             page_path: pagePath,
             viewed_at: new Date().toISOString(),
             referrer: document.referrer || null,
@@ -192,10 +222,11 @@ export async function trackPageView(pagePath) {
 
 // Generic event tracking
 export async function trackEvent(eventName, eventData = {}) {
-    if (!supabase) return;
+    const client = getSupabaseClient();
+    if (!client) return;
 
     try {
-        await supabase.from('page_views').insert([{
+        await client.from('page_views').insert([{
             page_path: `event:${eventName}`,
             viewed_at: new Date().toISOString(),
             referrer: JSON.stringify(eventData),
