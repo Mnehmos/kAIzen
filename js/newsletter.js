@@ -1,23 +1,47 @@
-import { subscribeEmail, getNewsletterIssues, getNewsletterIssue } from './supabase-client.js';
+// Newsletter page functionality for kAIzen Systems
+
+// Wait for page to load
+document.addEventListener('DOMContentLoaded', async function() {
+    // Wait a bit for Supabase to initialize
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    loadNewsletterArchive();
+    setupSubscribeForm();
+});
 
 // Load all newsletter issues
 async function loadNewsletterArchive() {
     const container = document.getElementById('newsletter-list');
     if (!container) return;
-
-    const { data: issues, error } = await getNewsletterIssues();
-
-    if (error || !issues) {
-        container.innerHTML = '<p class="error">Unable to load newsletter archive. Please try again later.</p>';
+    
+    const client = window.getKaizenSupabase();
+    if (!client) {
+        container.innerHTML = '<p class="error">Database connection not available. Please refresh the page.</p>';
         return;
     }
 
-    if (issues.length === 0) {
-        container.innerHTML = '<p>No newsletter issues available yet. Check back soon!</p>';
-        return;
-    }
+    try {
+        const { data: issues, error } = await client
+            .from('newsletter_issues')
+            .select('*')
+            .order('publish_date', { ascending: false });
 
-    container.innerHTML = issues.map(issue => createNewsletterCard(issue)).join('');
+        if (error) {
+            console.error('Error fetching newsletter issues:', error);
+            container.innerHTML = '<p class="error">Unable to load newsletter issues.</p>';
+            return;
+        }
+
+        if (!issues || issues.length === 0) {
+            container.innerHTML = '<p>No newsletter issues available yet.</p>';
+            return;
+        }
+
+        container.innerHTML = issues.map(issue => createNewsletterCard(issue)).join('');
+    } catch (err) {
+        console.error('Error loading newsletter:', err);
+        container.innerHTML = '<p class="error">Unable to load newsletter issues.</p>';
+    }
 }
 
 // Create newsletter card HTML
@@ -29,187 +53,195 @@ function createNewsletterCard(issue) {
     });
 
     const tierBadge = issue.tier_required === 'pro' 
-        ? '<span class="tag tier-pro">Pro</span>'
+        ? '<span class="tag tier-pro">Pro Only</span>'
         : '<span class="tag tier-free">Free</span>';
 
     const lockedClass = issue.tier_required === 'pro' ? 'locked' : '';
-    const clickHandler = issue.tier_required === 'pro' 
-        ? 'onclick="showUpgradePrompt()"'
-        : `onclick="viewNewsletterDetail('${issue.id}')"`;
-
-    const techniques = issue.technique_ids && issue.technique_ids.length > 0
-        ? issue.technique_ids.map(id => `<span class="tag">${id}</span>`).join('')
-        : '';
 
     return `
-        <div class="newsletter-card ${lockedClass}" ${clickHandler}>
+        <div class="newsletter-card ${lockedClass}" onclick="viewNewsletterDetail('${issue.id}')">
             <div class="newsletter-header">
                 <h3 class="newsletter-title">${issue.title}</h3>
                 <div class="newsletter-meta">
-                    <span>📅 ${date}</span>
+                    <span>${date}</span>
                     <span>•</span>
-                    <span>📮 ${issue.issue_number}</span>
+                    <span>${issue.issue_number}</span>
                 </div>
             </div>
             <p class="newsletter-summary">${issue.summary || 'Click to read more...'}</p>
-            <div class="newsletter-tags">
-                ${tierBadge}
-                ${techniques}
+            <div class="newsletter-footer">
+                <div class="newsletter-tags">
+                    ${tierBadge}
+                </div>
+                <div class="newsletter-action">
+                    ${issue.tier_required === 'pro' ? '🔒 Pro Required' : 'Read Article →'}
+                </div>
             </div>
         </div>
     `;
 }
 
-// View newsletter detail in modal
+// View newsletter detail
 window.viewNewsletterDetail = async function(id) {
     const modal = document.getElementById('newsletter-modal');
-    const detailContainer = document.getElementById('newsletter-detail');
+    const detailDiv = document.getElementById('newsletter-detail');
     
-    if (!modal || !detailContainer) return;
-
-    // Show modal with loading state
-    detailContainer.innerHTML = '<div class="loading">Loading newsletter...</div>';
-    openNewsletterModal();
-
-    // Fetch full newsletter
-    const { data: issue, error } = await getNewsletterIssue(id);
-
-    if (error || !issue) {
-        detailContainer.innerHTML = '<p class="error">Unable to load newsletter. Please try again.</p>';
+    if (!modal || !detailDiv) return;
+    
+    const client = window.getKaizenSupabase();
+    if (!client) {
+        alert('Database connection not available');
         return;
     }
 
-    // Format date
-    const date = new Date(issue.publish_date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+    try {
+        const { data: issue, error } = await client
+            .from('newsletter_issues')
+            .select('*')
+            .eq('id', id)
+            .single();
 
-    // Render full newsletter
-    detailContainer.innerHTML = `
-        <div class="newsletter-detail">
-            <div class="newsletter-header">
-                <h2>${issue.title}</h2>
-                <div class="newsletter-meta">
-                    <span>📅 ${date}</span>
-                    <span>•</span>
-                    <span>📮 ${issue.issue_number}</span>
+        if (error || !issue) {
+            console.error('Error fetching newsletter:', error);
+            alert('Unable to load newsletter issue');
+            return;
+        }
+
+        // Check if Pro content and user is not Pro
+        if (issue.tier_required === 'pro') {
+            detailDiv.innerHTML = `
+                <div class="pro-required">
+                    <h2>🔒 Pro Content</h2>
+                    <p>This newsletter issue is available to Pro subscribers only.</p>
+                    <a href="pricing.html" class="btn btn-primary">Upgrade to Pro</a>
                 </div>
-            </div>
-            <div class="markdown-content">
-                ${renderMarkdown(issue.content_md)}
-            </div>
-        </div>
-    `;
-};
+            `;
+        } else {
+            // Render newsletter content
+            detailDiv.innerHTML = `
+                <div class="newsletter-detail">
+                    <h2>${issue.title}</h2>
+                    <div class="newsletter-meta">
+                        <span>${new Date(issue.publish_date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })}</span>
+                        <span>•</span>
+                        <span>${issue.issue_number}</span>
+                        <span class="tag tier-${issue.tier_required}">${issue.tier_required}</span>
+                    </div>
+                    <div class="newsletter-content">
+                        ${renderMarkdown(issue.content_md)}
+                    </div>
+                </div>
+            `;
+        }
 
-// Show upgrade prompt for pro content
-window.showUpgradePrompt = function() {
-    const confirmed = confirm('This newsletter issue is available for Pro subscribers only. Would you like to upgrade to Pro for $19/month?');
-    if (confirmed) {
-        window.location.href = 'pricing.html';
+        modal.style.display = 'block';
+    } catch (err) {
+        console.error('Error loading newsletter detail:', err);
+        alert('Unable to load newsletter issue');
     }
 };
 
-// Simple markdown renderer (basic implementation)
+// Simple markdown renderer (basic support)
 function renderMarkdown(markdown) {
     if (!markdown) return '';
-
-    // This is a very basic markdown renderer
-    // For production, consider using a library like marked.js
-    let html = markdown;
-
-    // Headers
-    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-
-    // Bold
-    html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-
-    // Italic
-    html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
-
-    // Links
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>');
-
-    // Code blocks
-    html = html.replace(/```(\w+)?\n([\s\S]*?)```/gim, '<pre><code>$2</code></pre>');
-
-    // Inline code
-    html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
-
-    // Lists
-    html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-    html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
-    html = html.replace(/^(\d+)\. (.*$)/gim, '<li>$2</li>');
-
-    // Wrap consecutive list items
-    html = html.replace(/(<li>.*<\/li>\n?)+/gim, '<ul>$&</ul>');
-
-    // Paragraphs
-    html = html.split('\n\n').map(para => {
-        if (para.trim() && !para.startsWith('<') && !para.includes('</')) {
-            return `<p>${para.trim()}</p>`;
-        }
-        return para;
-    }).join('\n');
-
+    
+    // Convert markdown to HTML (basic implementation)
+    let html = markdown
+        // Headers
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        // Bold
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Code blocks
+        .replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>')
+        // Inline code
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        // Links
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+        // Line breaks
+        .replace(/\n/g, '<br>');
+    
     return html;
 }
 
-// Handle subscribe form submission
-document.addEventListener('DOMContentLoaded', function() {
+// Close newsletter modal
+window.closeNewsletterModal = function() {
+    const modal = document.getElementById('newsletter-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+// Setup subscribe form
+function setupSubscribeForm() {
     const form = document.getElementById('subscribe-form');
     const emailInput = document.getElementById('email-input');
     const messageDiv = document.getElementById('subscribe-message');
 
-    if (form) {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    if (!form) return;
 
-            const email = emailInput.value.trim();
-            if (!email) return;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-            // Disable form
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Subscribing...';
+        const email = emailInput.value.trim();
+        if (!email) return;
 
-            // Clear previous messages
-            messageDiv.innerHTML = '';
+        const client = window.getKaizenSupabase();
+        if (!client) {
+            messageDiv.innerHTML = '✗ Database connection not available';
+            messageDiv.className = 'form-message error';
+            return;
+        }
 
-            // Subscribe
-            const result = await subscribeEmail(email);
+        // Disable form
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Subscribing...';
+        messageDiv.innerHTML = '';
 
-            // Re-enable form
+        try {
+            const { data, error } = await client
+                .from('subscribers')
+                .insert([{ 
+                    email: email, 
+                    tier: 'free',
+                    subscribed_at: new Date().toISOString()
+                }])
+                .select();
+
             submitBtn.disabled = false;
             submitBtn.textContent = 'Subscribe Free';
 
-            if (result.success) {
-                messageDiv.innerHTML = '✓ Success! Check your email to confirm your subscription.';
+            if (error) {
+                if (error.code === '23505') {
+                    messageDiv.innerHTML = '✗ This email is already subscribed!';
+                } else {
+                    console.error('Subscription error:', error);
+                    messageDiv.innerHTML = '✗ Failed to subscribe. Please try again.';
+                }
+                messageDiv.className = 'form-message error';
+            } else {
+                messageDiv.innerHTML = '✓ Success! Welcome to kAIzen Systems!';
                 messageDiv.className = 'form-message success';
                 form.reset();
                 
-                // Close modal after 2 seconds
                 setTimeout(() => {
                     closeSubscribeModal();
                 }, 2000);
-            } else {
-                messageDiv.innerHTML = `✗ ${result.error}`;
-                messageDiv.className = 'form-message error';
             }
-        });
-    }
-
-    // Load newsletter archive
-    loadNewsletterArchive();
-
-    // Check for issue ID in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const issueId = urlParams.get('id');
-    if (issueId) {
-        viewNewsletterDetail(issueId);
-    }
-});
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Subscribe Free';
+            console.error('Subscription error:', err);
+            messageDiv.innerHTML = '✗ An unexpected error occurred.';
+            messageDiv.className = 'form-message error';
+        }
+    });
+}

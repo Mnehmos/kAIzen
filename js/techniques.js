@@ -1,339 +1,281 @@
-import { subscribeEmail, getTechniques, getTechnique } from './supabase-client.js';
+// Techniques page functionality for kAIzen Systems
 
-let allTechniques = [];
+// Wait for page to load
+document.addEventListener('DOMContentLoaded', async function() {
+    // Wait a bit for Supabase to initialize
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    loadTechniques();
+    setupFilters();
+    setupSubscribeForm();
+});
 
-// Load all techniques
-async function loadTechniques(filters = {}) {
+// Current filters
+let currentFilters = {
+    search: '',
+    category: '',
+    tier: ''
+};
+
+// Load techniques with current filters
+async function loadTechniques() {
     const container = document.getElementById('techniques-grid');
     if (!container) return;
+    
+    const client = window.getKaizenSupabase();
+    if (!client) {
+        container.innerHTML = '<p class="error">Database connection not available. Please refresh the page.</p>';
+        return;
+    }
 
     container.innerHTML = '<div class="loading">Loading techniques...</div>';
 
-    const { data: techniques, error } = await getTechniques(filters);
+    try {
+        let query = client
+            .from('techniques')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-    if (error || !techniques) {
-        container.innerHTML = '<p class="error">Unable to load techniques. Please try again later.</p>';
-        return;
+        // Apply filters
+        if (currentFilters.category) {
+            query = query.eq('category', currentFilters.category);
+        }
+        if (currentFilters.tier) {
+            query = query.eq('tier_required', currentFilters.tier);
+        }
+        if (currentFilters.search) {
+            query = query.or(`name.ilike.%${currentFilters.search}%,summary.ilike.%${currentFilters.search}%`);
+        }
+
+        const { data: techniques, error } = await query;
+
+        if (error) {
+            console.error('Error fetching techniques:', error);
+            container.innerHTML = '<p class="error">Unable to load techniques.</p>';
+            return;
+        }
+
+        if (!techniques || techniques.length === 0) {
+            container.innerHTML = '<p>No techniques found matching your criteria.</p>';
+            return;
+        }
+
+        container.innerHTML = techniques.map(technique => createTechniqueCard(technique)).join('');
+    } catch (err) {
+        console.error('Error loading techniques:', err);
+        container.innerHTML = '<p class="error">Unable to load techniques.</p>';
     }
-
-    if (techniques.length === 0) {
-        container.innerHTML = '<p>No techniques found matching your criteria.</p>';
-        return;
-    }
-
-    allTechniques = techniques;
-    container.innerHTML = techniques.map(technique => createTechniqueCard(technique)).join('');
 }
 
 // Create technique card HTML
 function createTechniqueCard(technique) {
     const tierBadge = technique.tier_required === 'pro'
-        ? '<span class="badge badge-pro">Pro</span>'
-        : '<span class="badge badge-free">Free</span>';
+        ? '<span class="tag tier-pro">Pro Only</span>'
+        : '<span class="tag tier-free">Free</span>';
 
     const lockedClass = technique.tier_required === 'pro' ? 'locked' : '';
-    const clickHandler = technique.tier_required === 'pro' 
-        ? 'onclick="showUpgradePrompt()"'
-        : `onclick="viewTechniqueDetail('${technique.id}')"`;
-
-    // Extract key metrics from full_spec if available
-    let metrics = '';
-    if (technique.full_spec) {
-        const spec = typeof technique.full_spec === 'string' 
-            ? JSON.parse(technique.full_spec) 
-            : technique.full_spec;
-        
-        if (spec.metrics) {
-            const m = spec.metrics;
-            metrics = `
-                <div class="technique-metrics">
-                    ${m.token_efficiency ? `
-                        <div class="metric">
-                            <div class="metric-label">Token Efficiency</div>
-                            <div class="metric-value">${m.token_efficiency}</div>
-                        </div>
-                    ` : ''}
-                    ${m.quality_improvement ? `
-                        <div class="metric">
-                            <div class="metric-label">Quality</div>
-                            <div class="metric-value">${m.quality_improvement}</div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-    }
 
     return `
-        <div class="technique-card ${lockedClass}" ${clickHandler}>
+        <div class="technique-card ${lockedClass}" onclick="viewTechniqueDetail('${technique.id}')">
             <div class="technique-header">
                 <div>
                     <h3 class="technique-title">${technique.name}</h3>
                     <div class="technique-version">${technique.version}</div>
                 </div>
-                ${tierBadge}
+                <span class="technique-category">${technique.category}</span>
             </div>
-            <div class="technique-category">${technique.category}</div>
             <p class="technique-summary">${technique.summary}</p>
-            ${metrics}
+            <div class="technique-footer">
+                <div class="newsletter-tags">
+                    ${tierBadge}
+                </div>
+                <div class="technique-action">
+                    ${technique.tier_required === 'pro' ? '🔒 Pro Required' : 'View Details →'}
+                </div>
+            </div>
         </div>
     `;
 }
 
-// View technique detail in modal
+// View technique detail
 window.viewTechniqueDetail = async function(id) {
     const modal = document.getElementById('technique-modal');
-    const detailContainer = document.getElementById('technique-detail');
+    const detailDiv = document.getElementById('technique-detail');
     
-    if (!modal || !detailContainer) return;
-
-    // Show modal with loading state
-    detailContainer.innerHTML = '<div class="loading">Loading technique...</div>';
-    openTechniqueModal();
-
-    // Fetch full technique
-    const { data: technique, error } = await getTechnique(id);
-
-    if (error || !technique) {
-        detailContainer.innerHTML = '<p class="error">Unable to load technique. Please try again.</p>';
+    if (!modal || !detailDiv) return;
+    
+    const client = window.getKaizenSupabase();
+    if (!client) {
+        alert('Database connection not available');
         return;
     }
 
-    // Parse full spec
-    const spec = typeof technique.full_spec === 'string' 
-        ? JSON.parse(technique.full_spec) 
-        : technique.full_spec;
+    try {
+        const { data: technique, error } = await client
+            .from('techniques')
+            .select('*')
+            .eq('id', id)
+            .single();
 
-    // Render full technique
-    detailContainer.innerHTML = renderTechniqueDetail(technique, spec);
-};
+        if (error || !technique) {
+            console.error('Error fetching technique:', error);
+            alert('Unable to load technique details');
+            return;
+        }
 
-// Render technique detail
-function renderTechniqueDetail(technique, spec) {
-    const tierBadge = technique.tier_required === 'pro'
-        ? '<span class="badge badge-pro">Pro</span>'
-        : '<span class="badge badge-free">Free</span>';
-
-    // Render prompts
-    const promptsHtml = spec.prompts ? `
-        <div class="technique-section">
-            <h3>Prompts</h3>
-            ${spec.prompts.map(prompt => `
-                <div class="prompt-block">
-                    <h4>${prompt.role}</h4>
-                    <pre><code>${escapeHtml(prompt.content)}</code></pre>
-                    ${prompt.variables ? `
-                        <div class="prompt-variables">
-                            <strong>Variables:</strong> ${prompt.variables.join(', ')}
-                        </div>
-                    ` : ''}
+        // Check if Pro content
+        if (technique.tier_required === 'pro') {
+            detailDiv.innerHTML = `
+                <div class="pro-required">
+                    <h2>🔒 Pro Content</h2>
+                    <p>This technique is available to Pro subscribers only.</p>
+                    <a href="pricing.html" class="btn btn-primary">Upgrade to Pro</a>
                 </div>
-            `).join('')}
-        </div>
-    ` : '';
-
-    // Render examples
-    const examplesHtml = spec.examples ? `
-        <div class="technique-section">
-            <h3>Examples</h3>
-            ${spec.examples.map((example, idx) => `
-                <div class="example-block">
-                    <h4>Example ${idx + 1}: ${example.scenario || 'Use Case'}</h4>
-                    <div class="example-input">
-                        <strong>Input:</strong>
-                        <pre><code>${escapeHtml(example.input)}</code></pre>
-                    </div>
-                    <div class="example-output">
-                        <strong>Output:</strong>
-                        <pre><code>${escapeHtml(example.output)}</code></pre>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    ` : '';
-
-    // Render metrics
-    const metricsHtml = spec.metrics ? `
-        <div class="technique-section">
-            <h3>Performance Metrics</h3>
-            <div class="metrics-grid">
-                ${spec.metrics.token_efficiency ? `
-                    <div class="metric-card">
-                        <div class="metric-label">Token Efficiency</div>
-                        <div class="metric-value">${spec.metrics.token_efficiency}</div>
-                    </div>
-                ` : ''}
-                ${spec.metrics.quality_improvement ? `
-                    <div class="metric-card">
-                        <div class="metric-label">Quality Improvement</div>
-                        <div class="metric-value">${spec.metrics.quality_improvement}</div>
-                    </div>
-                ` : ''}
-                ${spec.metrics.implementation_time ? `
-                    <div class="metric-card">
-                        <div class="metric-label">Implementation Time</div>
-                        <div class="metric-value">${spec.metrics.implementation_time}</div>
-                    </div>
-                ` : ''}
-                ${spec.metrics.error_reduction ? `
-                    <div class="metric-card">
-                        <div class="metric-label">Error Reduction</div>
-                        <div class="metric-value">${spec.metrics.error_reduction}</div>
-                    </div>
-                ` : ''}
-            </div>
-        </div>
-    ` : '';
-
-    // Render best practices
-    const bestPracticesHtml = spec.best_practices && spec.best_practices.length > 0 ? `
-        <div class="technique-section">
-            <h3>Best Practices</h3>
-            <ul>
-                ${spec.best_practices.map(practice => `<li>${practice}</li>`).join('')}
-            </ul>
-        </div>
-    ` : '';
-
-    return `
-        <div class="technique-detail">
-            <div class="technique-header">
-                <div>
+            `;
+        } else {
+            // Parse full_spec JSON if available
+            const spec = technique.full_spec || {};
+            const metrics = spec.metrics?.expected_improvements || {};
+            
+            detailDiv.innerHTML = `
+                <div class="technique-detail">
                     <h2>${technique.name}</h2>
                     <div class="technique-meta">
-                        <span>${technique.version}</span>
+                        <span class="technique-version">${technique.version}</span>
                         <span>•</span>
-                        <span>${technique.category}</span>
-                        <span>•</span>
-                        ${tierBadge}
+                        <span class="technique-category">${technique.category}</span>
+                        <span class="tag tier-${technique.tier_required}">${technique.tier_required}</span>
+                    </div>
+                    
+                    <div class="technique-section">
+                        <h3>Overview</h3>
+                        <p>${technique.summary}</p>
+                    </div>
+                    
+                    ${metrics.speed || metrics.cost || metrics.accuracy ? `
+                    <div class="technique-section">
+                        <h3>Performance Metrics</h3>
+                        <div class="metrics-grid">
+                            ${metrics.speed ? `<div class="metric"><strong>Speed:</strong> ${metrics.speed.value}</div>` : ''}
+                            ${metrics.cost ? `<div class="metric"><strong>Cost:</strong> ${metrics.cost.value}</div>` : ''}
+                            ${metrics.accuracy ? `<div class="metric"><strong>Accuracy:</strong> ${metrics.accuracy.value}</div>` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="technique-section">
+                        <h3>JSON Specification</h3>
+                        <pre><code>${JSON.stringify(spec, null, 2)}</code></pre>
                     </div>
                 </div>
-            </div>
-            
-            <div class="technique-section">
-                <h3>Overview</h3>
-                <p>${technique.summary}</p>
-            </div>
+            `;
+        }
 
-            ${spec.description ? `
-                <div class="technique-section">
-                    <h3>Description</h3>
-                    <p>${spec.description}</p>
-                </div>
-            ` : ''}
-
-            ${promptsHtml}
-            ${examplesHtml}
-            ${metricsHtml}
-            ${bestPracticesHtml}
-
-            <div class="technique-section">
-                <h3>JSON Specification</h3>
-                <pre><code>${JSON.stringify(spec, null, 2)}</code></pre>
-            </div>
-        </div>
-    `;
-}
-
-// Helper function to escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Show upgrade prompt for pro content
-window.showUpgradePrompt = function() {
-    const confirmed = confirm('This technique is available for Pro subscribers only. Would you like to upgrade to Pro for $19/month?');
-    if (confirmed) {
-        window.location.href = 'pricing.html';
+        modal.style.display = 'block';
+    } catch (err) {
+        console.error('Error loading technique detail:', err);
+        alert('Unable to load technique details');
     }
 };
 
-// Handle search and filters
-document.addEventListener('DOMContentLoaded', function() {
+// Close technique modal
+window.closeTechniqueModal = function() {
+    const modal = document.getElementById('technique-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+// Setup filters
+function setupFilters() {
     const searchInput = document.getElementById('search-input');
     const categoryFilter = document.getElementById('category-filter');
     const tierFilter = document.getElementById('tier-filter');
 
-    // Debounce search
-    let searchTimeout;
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                applyFilters();
-            }, 300);
+        searchInput.addEventListener('input', (e) => {
+            currentFilters.search = e.target.value;
+            loadTechniques();
         });
     }
 
     if (categoryFilter) {
-        categoryFilter.addEventListener('change', applyFilters);
+        categoryFilter.addEventListener('change', (e) => {
+            currentFilters.category = e.target.value;
+            loadTechniques();
+        });
     }
 
     if (tierFilter) {
-        tierFilter.addEventListener('change', applyFilters);
+        tierFilter.addEventListener('change', (e) => {
+            currentFilters.tier = e.target.value;
+            loadTechniques();
+        });
     }
+}
 
-    // Handle subscribe form
+// Setup subscribe form (same as home.js)
+function setupSubscribeForm() {
     const form = document.getElementById('subscribe-form');
     const emailInput = document.getElementById('email-input');
     const messageDiv = document.getElementById('subscribe-message');
 
-    if (form) {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    if (!form) return;
 
-            const email = emailInput.value.trim();
-            if (!email) return;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Subscribing...';
+        const email = emailInput.value.trim();
+        if (!email) return;
 
-            messageDiv.innerHTML = '';
+        const client = window.getKaizenSupabase();
+        if (!client) {
+            messageDiv.innerHTML = '✗ Database connection not available';
+            messageDiv.className = 'form-message error';
+            return;
+        }
 
-            const result = await subscribeEmail(email);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Subscribing...';
+        messageDiv.innerHTML = '';
+
+        try {
+            const { data, error } = await client
+                .from('subscribers')
+                .insert([{ 
+                    email: email, 
+                    tier: 'free',
+                    subscribed_at: new Date().toISOString()
+                }])
+                .select();
 
             submitBtn.disabled = false;
             submitBtn.textContent = 'Subscribe Free';
 
-            if (result.success) {
-                messageDiv.innerHTML = '✓ Success! Check your email to confirm your subscription.';
+            if (error) {
+                if (error.code === '23505') {
+                    messageDiv.innerHTML = '✗ This email is already subscribed!';
+                } else {
+                    console.error('Subscription error:', error);
+                    messageDiv.innerHTML = '✗ Failed to subscribe. Please try again.';
+                }
+                messageDiv.className = 'form-message error';
+            } else {
+                messageDiv.innerHTML = '✓ Success! Welcome to kAIzen Systems!';
                 messageDiv.className = 'form-message success';
                 form.reset();
                 
                 setTimeout(() => {
                     closeSubscribeModal();
                 }, 2000);
-            } else {
-                messageDiv.innerHTML = `✗ ${result.error}`;
-                messageDiv.className = 'form-message error';
             }
-        });
-    }
-
-    // Initial load
-    loadTechniques();
-
-    // Check for technique ID in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const techniqueId = urlParams.get('id');
-    if (techniqueId) {
-        viewTechniqueDetail(techniqueId);
-    }
-});
-
-// Apply filters
-function applyFilters() {
-    const searchTerm = document.getElementById('search-input')?.value.trim() || '';
-    const category = document.getElementById('category-filter')?.value || '';
-    const tier = document.getElementById('tier-filter')?.value || '';
-
-    const filters = {};
-    if (searchTerm) filters.search = searchTerm;
-    if (category) filters.category = category;
-    if (tier) filters.tier = tier;
-
-    loadTechniques(filters);
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Subscribe Free';
+            console.error('Subscription error:', err);
+            messageDiv.innerHTML = '✗ An unexpected error occurred.';
+            messageDiv.className = 'form-message error';
+        }
+    });
 }

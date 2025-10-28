@@ -1,45 +1,85 @@
-import { subscribeEmail, getNewsletterIssues, getTechniques } from './supabase-client.js';
+// Home page functionality for kAIzen Systems
+
+// Wait for Supabase to be initialized
+document.addEventListener('DOMContentLoaded', async function() {
+    // Wait a bit for Supabase to initialize
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    loadLatestIssues();
+    loadFeaturedTechniques();
+    setupSubscribeForm();
+});
 
 // Load latest newsletter issues for homepage
 async function loadLatestIssues() {
     const container = document.getElementById('latest-issues');
     if (!container) return;
-
-    const { data: issues, error } = await getNewsletterIssues(3);
-
-    if (error || !issues) {
-        container.innerHTML = '<p class="error">Unable to load newsletter issues. Please try again later.</p>';
+    
+    const client = window.getKaizenSupabase();
+    if (!client) {
+        container.innerHTML = '<p class="error">Database connection not available. Please refresh the page.</p>';
         return;
     }
 
-    if (issues.length === 0) {
-        container.innerHTML = '<p>No newsletter issues available yet.</p>';
-        return;
-    }
+    try {
+        const { data: issues, error } = await client
+            .from('newsletter_issues')
+            .select('*')
+            .order('publish_date', { ascending: false })
+            .limit(3);
 
-    container.innerHTML = issues.map(issue => createNewsletterCard(issue)).join('');
+        if (error) {
+            console.error('Error fetching newsletter issues:', error);
+            container.innerHTML = '<p class="error">Unable to load newsletter issues.</p>';
+            return;
+        }
+
+        if (!issues || issues.length === 0) {
+            container.innerHTML = '<p>No newsletter issues available yet.</p>';
+            return;
+        }
+
+        container.innerHTML = issues.map(issue => createNewsletterCard(issue)).join('');
+    } catch (err) {
+        console.error('Error loading issues:', err);
+        container.innerHTML = '<p class="error">Unable to load newsletter issues.</p>';
+    }
 }
 
 // Load featured techniques for homepage
 async function loadFeaturedTechniques() {
     const container = document.getElementById('featured-techniques');
     if (!container) return;
-
-    const { data: techniques, error } = await getTechniques();
-
-    if (error || !techniques) {
-        container.innerHTML = '<p class="error">Unable to load techniques. Please try again later.</p>';
+    
+    const client = window.getKaizenSupabase();
+    if (!client) {
+        container.innerHTML = '<p class="error">Database connection not available. Please refresh the page.</p>';
         return;
     }
 
-    if (techniques.length === 0) {
-        container.innerHTML = '<p>No techniques available yet.</p>';
-        return;
-    }
+    try {
+        const { data: techniques, error } = await client
+            .from('techniques')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(3);
 
-    // Show first 3 techniques
-    const featured = techniques.slice(0, 3);
-    container.innerHTML = featured.map(technique => createTechniqueCard(technique)).join('');
+        if (error) {
+            console.error('Error fetching techniques:', error);
+            container.innerHTML = '<p class="error">Unable to load techniques.</p>';
+            return;
+        }
+
+        if (!techniques || techniques.length === 0) {
+            container.innerHTML = '<p>No techniques available yet.</p>';
+            return;
+        }
+
+        container.innerHTML = techniques.map(technique => createTechniqueCard(technique)).join('');
+    } catch (err) {
+        console.error('Error loading techniques:', err);
+        container.innerHTML = '<p class="error">Unable to load techniques.</p>';
+    }
 }
 
 // Create newsletter card HTML
@@ -99,47 +139,66 @@ function createTechniqueCard(technique) {
     `;
 }
 
-// View newsletter (placeholder - would open modal with full content)
+// View newsletter (redirect to newsletter page)
 window.viewNewsletter = function(id) {
-    // For now, redirect to newsletter page
     window.location.href = `newsletter.html?id=${id}`;
 };
 
-// View technique (placeholder - would open modal with full content)
+// View technique (redirect to techniques page)
 window.viewTechnique = function(id) {
-    // For now, redirect to techniques page
     window.location.href = `techniques.html?id=${id}`;
 };
 
-// Handle subscribe form submission
-document.addEventListener('DOMContentLoaded', function() {
+// Setup subscribe form
+function setupSubscribeForm() {
     const form = document.getElementById('subscribe-form');
     const emailInput = document.getElementById('email-input');
     const messageDiv = document.getElementById('subscribe-message');
 
-    if (form) {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    if (!form) return;
 
-            const email = emailInput.value.trim();
-            if (!email) return;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-            // Disable form
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Subscribing...';
+        const email = emailInput.value.trim();
+        if (!email) return;
 
-            // Clear previous messages
-            messageDiv.innerHTML = '';
+        const client = window.getKaizenSupabase();
+        if (!client) {
+            messageDiv.innerHTML = '✗ Database connection not available';
+            messageDiv.className = 'form-message error';
+            return;
+        }
 
-            // Subscribe
-            const result = await subscribeEmail(email);
+        // Disable form
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Subscribing...';
+        messageDiv.innerHTML = '';
+
+        try {
+            const { data, error } = await client
+                .from('subscribers')
+                .insert([{ 
+                    email: email, 
+                    tier: 'free',
+                    subscribed_at: new Date().toISOString()
+                }])
+                .select();
 
             // Re-enable form
             submitBtn.disabled = false;
             submitBtn.textContent = 'Subscribe Free';
 
-            if (result.success) {
+            if (error) {
+                if (error.code === '23505') {
+                    messageDiv.innerHTML = '✗ This email is already subscribed!';
+                } else {
+                    console.error('Subscription error:', error);
+                    messageDiv.innerHTML = '✗ Failed to subscribe. Please try again.';
+                }
+                messageDiv.className = 'form-message error';
+            } else {
                 messageDiv.innerHTML = '✓ Success! Check your email to confirm your subscription.';
                 messageDiv.className = 'form-message success';
                 form.reset();
@@ -148,14 +207,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => {
                     closeSubscribeModal();
                 }, 2000);
-            } else {
-                messageDiv.innerHTML = `✗ ${result.error}`;
-                messageDiv.className = 'form-message error';
             }
-        });
-    }
-
-    // Load content
-    loadLatestIssues();
-    loadFeaturedTechniques();
-});
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Subscribe Free';
+            console.error('Subscription error:', err);
+            messageDiv.innerHTML = '✗ An unexpected error occurred.';
+            messageDiv.className = 'form-message error';
+        }
+    });
+}
