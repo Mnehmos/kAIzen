@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="kAIzen Systems - Standardizing AI Workflows at Scale. Discover proven prompt engineering techniques and optimization strategies.">
+    <meta name="keywords" content="AI workflows, prompt engineering, optimization, techniques, newsletter">
+    <title>kAIzen Systems - Standardizing AI Workflows at Scale</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-logo">
+                    <h1>kAIzen Systems</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html" class="active">Home</a></li>
+                    <li><a href="newsletter.html">Newsletter</a></li>
+                    <li><a href="techniques.html">Techniques</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                </ul>
+                <button class="btn btn-primary" onclick="openSubscribeModal()">Subscribe</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2 class="hero-title">Standardizing AI Workflows at Scale</h2>
+                <p class="hero-subtitle">
+                    Proven prompt engineering techniques and optimization strategies delivered weekly.
+                    Transform your AI implementations from trial-and-error to systematic excellence.
+                </p>
+                <div class="hero-cta">
+                    <button class="btn btn-primary btn-large" onclick="openSubscribeModal()">
+                        Get Weekly Insights
+                    </button>
+                    <a href="techniques.html" class="btn btn-secondary btn-large">
+                        Browse Techniques
+                    </a>
+                </div>
+                <p class="hero-stats">Join 50+ AI practitioners optimizing their workflows</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Value Proposition -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Three Layers of AI Excellence</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📰</div>
+                    <h3>Weekly Newsletter</h3>
+                    <p>Curated prompt engineering techniques with real-world case studies, performance benchmarks, and implementation guides.</p>
+                    <a href="newsletter.html" class="feature-link">View Archive →</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛠️</div>
+                    <h3>Technique Library</h3>
+                    <p>Searchable, machine-readable technique specifications with standardized schemas for seamless integration.</p>
+                    <a href="techniques.html" class="feature-link">Explore Library →</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3>MCP Tool Integration</h3>
+                    <p class="feature-label">Coming Soon</p>
+                    <p>Model Context Protocol tools for automated technique discovery and application in your workflow.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Latest Newsletter Issues -->
+    <section class="section section-alt">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Latest Newsletter Issues</h2>
+                <a href="newsletter.html" class="section-link">View All →</a>
+            </div>
+            <div id="latest-issues" class="newsletter-preview">
+                <div class="loading">Loading latest issues...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technique Highlights -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Featured Techniques</h2>
+                <a href="techniques.html" class="section-link">Browse All →</a>
+            </div>
+            <div id="featured-techniques" class="techniques-preview">
+                <div class="loading">Loading featured techniques...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Start Optimizing Your AI Workflows Today</h2>
+                <p>Join our community and receive proven techniques every week.</p>
+                <button class="btn btn-primary btn-large" onclick="openSubscribeModal()">
+                    Subscribe Free
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>kAIzen Systems</h3>
+                    <p>Standardizing AI workflows at scale through proven techniques and systematic approaches.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="newsletter.html">Newsletter Archive</a></li>
+                        <li><a href="techniques.html">Technique Library</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 kAIzen Systems. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Subscribe Modal -->
+    <div id="subscribe-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeSubscribeModal()">&times;</span>
+            <h2>Subscribe to kAIzen Systems</h2>
+            <p>Get weekly prompt engineering techniques delivered to your inbox.</p>
+            <form id="subscribe-form" class="subscribe-form">
+                <input 
+                    type="email" 
+                    id="email-input" 
+                    placeholder="your.email@example.com" 
+                    required
+                    class="form-input"
+                >
+                <button type="submit" class="btn btn-primary btn-block">Subscribe Free</button>
+            </form>
+            <div id="subscribe-message" class="form-message"></div>
+            <p class="form-footer">
+                Free tier: 1-2 techniques per week<br>
+                <a href="pricing.html">Upgrade to Pro</a> for full access
+            </p>
+        </div>
+    </div>
+
+    <script type="module" src="js/supabase-client.js"></script>
+    <script type="module" src="js/home.js"></script>
+    <script src="js/modal.js"></script>
+</body>
+</html>

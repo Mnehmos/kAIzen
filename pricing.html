@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="kAIzen Systems Pricing - Choose between Free and Pro tiers for AI workflow optimization techniques.">
+    <title>Pricing - kAIzen Systems</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-logo">
+                    <h1>kAIzen Systems</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="newsletter.html">Newsletter</a></li>
+                    <li><a href="techniques.html">Techniques</a></li>
+                    <li><a href="pricing.html" class="active">Pricing</a></li>
+                </ul>
+                <button class="btn btn-primary" onclick="openSubscribeModal()">Subscribe</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Simple, Transparent Pricing</h1>
+            <p class="page-subtitle">
+                Choose the plan that fits your needs. Upgrade or downgrade at any time.
+            </p>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <section class="section">
+        <div class="container">
+            <div class="pricing-grid">
+                <!-- Free Tier -->
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3 class="pricing-title">Free</h3>
+                        <div class="pricing-price">
+                            <span class="price-amount">$0</span>
+                            <span class="price-period">/month</span>
+                        </div>
+                        <p class="pricing-description">Perfect for getting started</p>
+                    </div>
+                    <ul class="pricing-features">
+                        <li class="feature-included">✓ Weekly newsletter (1-2 techniques)</li>
+                        <li class="feature-included">✓ Basic technique library access</li>
+                        <li class="feature-included">✓ Community resources</li>
+                        <li class="feature-excluded">✗ Full newsletter archive</li>
+                        <li class="feature-excluded">✗ Premium techniques</li>
+                        <li class="feature-excluded">✗ MCP tool access (coming soon)</li>
+                        <li class="feature-excluded">✗ Priority support</li>
+                    </ul>
+                    <button class="btn btn-secondary btn-block" onclick="openSubscribeModal()">
+                        Get Started Free
+                    </button>
+                </div>
+
+                <!-- Pro Tier -->
+                <div class="pricing-card pricing-card-featured">
+                    <div class="pricing-badge">Most Popular</div>
+                    <div class="pricing-header">
+                        <h3 class="pricing-title">Pro</h3>
+                        <div class="pricing-price">
+                            <span class="price-amount">$19</span>
+                            <span class="price-period">/month</span>
+                        </div>
+                        <p class="pricing-description">For serious AI practitioners</p>
+                    </div>
+                    <ul class="pricing-features">
+                        <li class="feature-included">✓ Everything in Free</li>
+                        <li class="feature-included">✓ Full newsletter archive access</li>
+                        <li class="feature-included">✓ Complete technique library</li>
+                        <li class="feature-included">✓ Advanced implementation guides</li>
+                        <li class="feature-included">✓ Performance benchmarks</li>
+                        <li class="feature-included">✓ Early access to MCP tools</li>
+                        <li class="feature-included">✓ Priority email support</li>
+                    </ul>
+                    <form action="https://checkout.stripe.com/c/pay/YOUR_STRIPE_LINK" method="POST" id="pro-checkout-form">
+                        <input type="hidden" name="client_reference_id" id="client-reference-id">
+                        <button type="submit" class="btn btn-primary btn-block btn-large">
+                            Upgrade to Pro
+                        </button>
+                    </form>
+                    <p class="pricing-note">Cancel anytime. No questions asked.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <h3 class="faq-question">What's included in the Free tier?</h3>
+                    <p class="faq-answer">
+                        The Free tier gives you access to our weekly newsletter with 1-2 curated techniques, 
+                        basic technique library browsing, and community resources. It's perfect for getting 
+                        started with AI workflow optimization.
+                    </p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Why upgrade to Pro?</h3>
+                    <p class="faq-answer">
+                        Pro subscribers get full access to our complete technique library, all newsletter archives 
+                        with advanced implementation guides, performance benchmarks, and early access to our MCP 
+                        tool integration (coming soon). Plus priority email support.
+                    </p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Can I cancel anytime?</h3>
+                    <p class="faq-answer">
+                        Absolutely. You can cancel your Pro subscription at any time. No questions asked, 
+                        no cancellation fees. You'll retain access until the end of your billing period.
+                    </p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">What payment methods do you accept?</h3>
+                    <p class="faq-answer">
+                        We accept all major credit cards (Visa, Mastercard, American Express) through 
+                        Stripe's secure payment processing. We're working on adding PayPal support soon.
+                    </p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">When will the MCP tool be available?</h3>
+                    <p class="faq-answer">
+                        Our Model Context Protocol tool integration is currently in development. Pro subscribers 
+                        will get early access when it launches (estimated Q2 2025). This will enable automated 
+                        technique discovery and application in your workflow.
+                    </p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Do you offer refunds?</h3>
+                    <p class="faq-answer">
+                        Yes! If you're not satisfied within the first 30 days, we'll issue a full refund. 
+                        Just email us with your cancellation request.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Optimize Your AI Workflows?</h2>
+                <p>Join our community and start implementing proven techniques today.</p>
+                <div class="cta-buttons">
+                    <button class="btn btn-primary btn-large" onclick="openSubscribeModal()">
+                        Start Free
+                    </button>
+                    <button class="btn btn-secondary btn-large" onclick="document.getElementById('pro-checkout-form').submit()">
+                        Go Pro Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>kAIzen Systems</h3>
+                    <p>Standardizing AI workflows at scale through proven techniques and systematic approaches.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="newsletter.html">Newsletter Archive</a></li>
+                        <li><a href="techniques.html">Technique Library</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 kAIzen Systems. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Subscribe Modal -->
+    <div id="subscribe-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeSubscribeModal()">&times;</span>
+            <h2>Subscribe to kAIzen Systems</h2>
+            <p>Get weekly prompt engineering techniques delivered to your inbox.</p>
+            <form id="subscribe-form" class="subscribe-form">
+                <input 
+                    type="email" 
+                    id="email-input" 
+                    placeholder="your.email@example.com" 
+                    required
+                    class="form-input"
+                >
+                <button type="submit" class="btn btn-primary btn-block">Subscribe Free</button>
+            </form>
+            <div id="subscribe-message" class="form-message"></div>
+        </div>
+    </div>
+
+    <script src="js/modal.js"></script>
+    <script>
+        // Generate unique reference ID for Stripe
+        document.getElementById('client-reference-id').value = 'user_' + Date.now();
+    </script>
+</body>
+</html>

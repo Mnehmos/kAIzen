@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Browse the kAIzen Systems Technique Library - Searchable, machine-readable prompt engineering techniques with standardized schemas.">
+    <title>Technique Library - kAIzen Systems</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-logo">
+                    <h1>kAIzen Systems</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="newsletter.html">Newsletter</a></li>
+                    <li><a href="techniques.html" class="active">Techniques</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                </ul>
+                <button class="btn btn-primary" onclick="openSubscribeModal()">Subscribe</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">Technique Library</h1>
+            <p class="page-subtitle">
+                Searchable, machine-readable prompt engineering techniques with standardized schemas for seamless integration.
+            </p>
+        </div>
+    </section>
+
+    <!-- Search and Filter -->
+    <section class="section">
+        <div class="container">
+            <div class="search-filter">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="Search techniques..." 
+                    class="form-input search-input"
+                >
+                <select id="category-filter" class="form-select">
+                    <option value="">All Categories</option>
+                    <option value="task-decomposition">Task Decomposition</option>
+                    <option value="quality-assurance">Quality Assurance</option>
+                    <option value="workflow-optimization">Workflow Optimization</option>
+                    <option value="context-management">Context Management</option>
+                    <option value="iterative-refinement">Iterative Refinement</option>
+                </select>
+                <select id="tier-filter" class="form-select">
+                    <option value="">All Tiers</option>
+                    <option value="free">Free</option>
+                    <option value="pro">Pro</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Techniques Grid -->
+    <section class="section">
+        <div class="container">
+            <div id="techniques-grid" class="techniques-grid">
+                <div class="loading">Loading techniques...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technique Detail Modal -->
+    <div id="technique-modal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="modal-close" onclick="closeTechniqueModal()">&times;</span>
+            <div id="technique-detail">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>kAIzen Systems</h3>
+                    <p>Standardizing AI workflows at scale through proven techniques and systematic approaches.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="newsletter.html">Newsletter Archive</a></li>
+                        <li><a href="techniques.html">Technique Library</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 kAIzen Systems. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Subscribe Modal -->
+    <div id="subscribe-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeSubscribeModal()">&times;</span>
+            <h2>Subscribe to kAIzen Systems</h2>
+            <p>Get weekly prompt engineering techniques delivered to your inbox.</p>
+            <form id="subscribe-form" class="subscribe-form">
+                <input 
+                    type="email" 
+                    id="email-input" 
+                    placeholder="your.email@example.com" 
+                    required
+                    class="form-input"
+                >
+                <button type="submit" class="btn btn-primary btn-block">Subscribe Free</button>
+            </form>
+            <div id="subscribe-message" class="form-message"></div>
+            <p class="form-footer">
+                Free tier: 1-2 techniques per week<br>
+                <a href="pricing.html">Upgrade to Pro</a> for full access
+            </p>
+        </div>
+    </div>
+
+    <script type="module" src="js/supabase-client.js"></script>
+    <script type="module" src="js/techniques.js"></script>
+    <script src="js/modal.js"></script>
+</body>
+</html>

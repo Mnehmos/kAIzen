@@ -1,0 +1,38 @@
+# Environment variables (keep credentials private in production)
+.env
+.env.local
+*.env.local
+
+# Node modules (if added later)
+node_modules/
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build outputs (if added later)
+dist/
+build/
+.cache/
+
+# Keep Project Creds.env for reference but don't commit to public repo
+# (Already has credentials in supabase-client.js which is safe - public anon key)
+supabase/Project Creds.env
