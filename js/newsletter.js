@@ -107,15 +107,55 @@ window.viewNewsletterDetail = async function(id) {
             return;
         }
 
-        // Check if Pro content and user is not Pro
+        // Check if Pro content and user has access
         if (issue.tier_required === 'pro') {
-            detailDiv.innerHTML = `
-                <div class="pro-required">
-                    <h2>🔒 Pro Content</h2>
-                    <p>This newsletter issue is available to Pro subscribers only.</p>
-                    <a href="pricing.html" class="btn btn-primary">Upgrade to Pro</a>
-                </div>
-            `;
+            // Check if user is authenticated and has Pro tier
+            const isAuth = window.kaizenAuth && window.kaizenAuth.isAuthenticated();
+            const hasPro = window.kaizenAuth && window.kaizenAuth.hasProAccess();
+            
+            if (!isAuth) {
+                // Not logged in - show login prompt
+                detailDiv.innerHTML = `
+                    <div class="pro-required">
+                        <h2>🔒 Pro Content</h2>
+                        <p>This newsletter issue is available to Pro subscribers only.</p>
+                        <p>Please login to your account to access Pro content.</p>
+                        <button class="btn btn-primary" onclick="window.kaizenAuth.showLoginModal()">Login</button>
+                        <a href="pricing.html" class="btn btn-secondary">Learn More</a>
+                    </div>
+                `;
+            } else if (!hasPro) {
+                // Logged in but not Pro - show upgrade prompt
+                detailDiv.innerHTML = `
+                    <div class="pro-required">
+                        <h2>🔒 Pro Content</h2>
+                        <p>This newsletter issue is available to Pro subscribers only.</p>
+                        <p>Upgrade to Pro to access all exclusive content.</p>
+                        <a href="pricing.html" class="btn btn-primary">Upgrade to Pro</a>
+                        <a href="account.html" class="btn btn-secondary">View Account</a>
+                    </div>
+                `;
+            } else {
+                // Has Pro access - show content
+                detailDiv.innerHTML = `
+                    <div class="newsletter-detail">
+                        <h2>${issue.title}</h2>
+                        <div class="newsletter-meta">
+                            <span>${new Date(issue.publish_date).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            })}</span>
+                            <span>•</span>
+                            <span>${issue.issue_number}</span>
+                            <span class="tag tier-${issue.tier_required}">${issue.tier_required}</span>
+                        </div>
+                        <div class="newsletter-content">
+                            ${renderMarkdown(issue.content_md)}
+                        </div>
+                    </div>
+                `;
+            }
         } else {
             // Render newsletter content
             detailDiv.innerHTML = `

@@ -123,15 +123,72 @@ window.viewTechniqueDetail = async function(id) {
             return;
         }
 
-        // Check if Pro content
+        // Check if Pro content and user has access
         if (technique.tier_required === 'pro') {
-            detailDiv.innerHTML = `
-                <div class="pro-required">
-                    <h2>🔒 Pro Content</h2>
-                    <p>This technique is available to Pro subscribers only.</p>
-                    <a href="pricing.html" class="btn btn-primary">Upgrade to Pro</a>
-                </div>
-            `;
+            // Check if user is authenticated and has Pro tier
+            const isAuth = window.kaizenAuth && window.kaizenAuth.isAuthenticated();
+            const hasPro = window.kaizenAuth && window.kaizenAuth.hasProAccess();
+            
+            if (!isAuth) {
+                // Not logged in - show login prompt
+                detailDiv.innerHTML = `
+                    <div class="pro-required">
+                        <h2>🔒 Pro Content</h2>
+                        <p>This technique is available to Pro subscribers only.</p>
+                        <p>Please login to your account to access Pro techniques.</p>
+                        <button class="btn btn-primary" onclick="window.kaizenAuth.showLoginModal()">Login</button>
+                        <a href="pricing.html" class="btn btn-secondary">Learn More</a>
+                    </div>
+                `;
+            } else if (!hasPro) {
+                // Logged in but not Pro - show upgrade prompt
+                detailDiv.innerHTML = `
+                    <div class="pro-required">
+                        <h2>🔒 Pro Content</h2>
+                        <p>This technique is available to Pro subscribers only.</p>
+                        <p>Upgrade to Pro to access all exclusive techniques and machine-readable specifications.</p>
+                        <a href="pricing.html" class="btn btn-primary">Upgrade to Pro</a>
+                        <a href="account.html" class="btn btn-secondary">View Account</a>
+                    </div>
+                `;
+            } else {
+                // Has Pro access - show content
+                const spec = technique.full_spec || {};
+                const metrics = spec.metrics?.expected_improvements || {};
+                
+                detailDiv.innerHTML = `
+                    <div class="technique-detail">
+                        <h2>${technique.name}</h2>
+                        <div class="technique-meta">
+                            <span class="technique-version">${technique.version}</span>
+                            <span>•</span>
+                            <span class="technique-category">${technique.category}</span>
+                            <span class="tag tier-${technique.tier_required}">${technique.tier_required}</span>
+                        </div>
+                        
+                        <div class="technique-section">
+                            <h3>Overview</h3>
+                            <p>${technique.summary}</p>
+                        </div>
+                        
+                        ${metrics.speed || metrics.cost || metrics.accuracy ? `
+                        <div class="technique-section">
+                            <h3>Performance Metrics</h3>
+                            <div class="metrics-grid">
+                                ${metrics.speed ? `<div class="metric"><strong>Speed:</strong> ${metrics.speed.value}</div>` : ''}
+                                ${metrics.cost ? `<div class="metric"><strong>Cost:</strong> ${metrics.cost.value}</div>` : ''}
+                                ${metrics.accuracy ? `<div class="metric"><strong>Accuracy:</strong> ${metrics.accuracy.value}</div>` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="technique-section">
+                            <h3>JSON Specification</h3>
+                            <pre><code>${JSON.stringify(spec, null, 2)}</code></pre>
+                        </div>
+                    </div>
+                `;
+            }
         } else {
             // Parse full_spec JSON if available
             const spec = technique.full_spec || {};

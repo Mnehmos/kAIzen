@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage your kAIzen Systems account and subscription">
+    <title>Account - kAIzen Systems</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-init.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-logo">
+                    <h1>kAIzen Systems</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="newsletter.html">Newsletter</a></li>
+                    <li><a href="techniques.html">Techniques</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                </ul>
+                <div id="auth-buttons" style="display: none;">
+                    <button class="btn btn-secondary" onclick="window.kaizenAuth.showLoginModal()">Login</button>
+                </div>
+                <div id="user-menu" style="display: none;">
+                    <button class="btn btn-secondary">
+                        <span id="user-email"></span> (<span id="user-tier-badge"></span>)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Account Section -->
+    <section class="section">
+        <div class="container">
+            <div class="account-container">
+                <h1>My Account</h1>
+                
+                <!-- Account Info -->
+                <div class="account-card">
+                    <h2>Account Information</h2>
+                    <div class="account-info">
+                        <div class="info-row">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value" id="account-email">Loading...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Member Since:</span>
+                            <span class="info-value" id="account-created">Loading...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Account Status:</span>
+                            <span class="info-value">
+                                <span class="tag" id="account-status">Active</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscription Info -->
+                <div class="account-card">
+                    <h2>Subscription</h2>
+                    <div class="subscription-info">
+                        <div class="current-tier">
+                            <h3>Current Tier</h3>
+                            <div class="tier-badge-large" id="current-tier-badge">
+                                <span id="tier-name">Free</span>
+                            </div>
+                            <p id="tier-description">
+                                Access to 1-2 free techniques per week
+                            </p>
+                        </div>
+                        
+                        <div id="upgrade-section" class="upgrade-section">
+                            <h3>Upgrade to Pro</h3>
+                            <ul class="benefits-list">
+                                <li>✓ Full access to all techniques</li>
+                                <li>✓ Exclusive Pro-only newsletter content</li>
+                                <li>✓ Machine-readable technique specifications</li>
+                                <li>✓ Priority support</li>
+                            </ul>
+                            <a href="pricing.html" class="btn btn-primary btn-large">
+                                Upgrade to Pro - $9/month
+                            </a>
+                        </div>
+
+                        <div id="pro-section" class="pro-section" style="display: none;">
+                            <div class="pro-status">
+                                <h3>🎉 Pro Member</h3>
+                                <p>Thank you for supporting kAIzen Systems!</p>
+                            </div>
+                            <div class="subscription-details">
+                                <div class="info-row">
+                                    <span class="info-label">Billing:</span>
+                                    <span class="info-value">$9.00 / month</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Status:</span>
+                                    <span class="info-value">Active</span>
+                                </div>
+                            </div>
+                            <p class="manage-subscription-note">
+                                To manage your subscription or update payment details, please contact support.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="account-card">
+                    <h2>Security</h2>
+                    <button class="btn btn-secondary" onclick="showPasswordChangeForm()">
+                        Change Password
+                    </button>
+                    
+                    <div id="password-change-form" class="password-form" style="display: none;">
+                        <form id="update-password-form">
+                            <div class="form-group">
+                                <label for="new-password">New Password</label>
+                                <input 
+                                    type="password" 
+                                    id="new-password" 
+                                    class="form-input" 
+                                    placeholder="Enter new password"
+                                    minlength="6"
+                                    required
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm-password">Confirm Password</label>
+                                <input 
+                                    type="password" 
+                                    id="confirm-password" 
+                                    class="form-input" 
+                                    placeholder="Confirm new password"
+                                    minlength="6"
+                                    required
+                                >
+                            </div>
+                            <div id="password-message" class="form-message"></div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Update Password</button>
+                                <button type="button" class="btn btn-secondary" onclick="hidePasswordChangeForm()">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Account Actions -->
+                <div class="account-card">
+                    <h2>Account Actions</h2>
+                    <div class="account-actions">
+                        <button class="btn btn-danger" onclick="handleLogout()">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>kAIzen Systems</h3>
+                    <p>Standardizing AI workflows at scale through proven techniques and systematic approaches.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="newsletter.html">Newsletter Archive</a></li>
+                        <li><a href="techniques.html">Technique Library</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 kAIzen Systems. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script>
+        // Check if user is logged in on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for auth to initialize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            if (!window.kaizenAuth.isAuthenticated()) {
+                // Redirect to home if not logged in
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            loadAccountInfo();
+        });
+
+        // Load account information
+        async function loadAccountInfo() {
+            const user = window.kaizenAuth.getCurrentUser();
+            const tier = window.kaizenAuth.getUserTier();
+            
+            if (!user) return;
+
+            // Update email
+            document.getElementById('account-email').textContent = user.email;
+            
+            // Update created date
+            const createdDate = new Date(user.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('account-created').textContent = createdDate;
+
+            // Update tier information
+            const tierName = document.getElementById('tier-name');
+            const tierBadge = document.getElementById('current-tier-badge');
+            const tierDescription = document.getElementById('tier-description');
+            const upgradeSection = document.getElementById('upgrade-section');
+            const proSection = document.getElementById('pro-section');
+
+            if (tier === 'pro') {
+                tierName.textContent = 'Pro';
+                tierBadge.classList.add('tier-pro');
+                tierDescription.textContent = 'Full access to all techniques and exclusive content';
+                upgradeSection.style.display = 'none';
+                proSection.style.display = 'block';
+            } else {
+                tierName.textContent = 'Free';
+                tierBadge.classList.add('tier-free');
+                tierDescription.textContent = 'Access to 1-2 free techniques per week';
+                upgradeSection.style.display = 'block';
+                proSection.style.display = 'none';
+            }
+        }
+
+        // Show password change form
+        function showPasswordChangeForm() {
+            document.getElementById('password-change-form').style.display = 'block';
+        }
+
+        // Hide password change form
+        function hidePasswordChangeForm() {
+            document.getElementById('password-change-form').style.display = 'none';
+            document.getElementById('update-password-form').reset();
+            document.getElementById('password-message').innerHTML = '';
+        }
+
+        // Handle password update
+        document.getElementById('update-password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const messageDiv = document.getElementById('password-message');
+            
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                messageDiv.innerHTML = '✗ Passwords do not match';
+                messageDiv.className = 'form-message error';
+                return;
+            }
+            
+            // Validate password length
+            if (newPassword.length < 6) {
+                messageDiv.innerHTML = '✗ Password must be at least 6 characters';
+                messageDiv.className = 'form-message error';
+                return;
+            }
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Updating...';
+            
+            const result = await window.kaizenAuth.updatePassword(newPassword);
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Update Password';
+            
+            if (result.success) {
+                messageDiv.innerHTML = '✓ Password updated successfully';
+                messageDiv.className = 'form-message success';
+                setTimeout(() => {
+                    hidePasswordChangeForm();
+                }, 2000);
+            } else {
+                messageDiv.innerHTML = `✗ ${result.error}`;
+                messageDiv.className = 'form-message error';
+            }
+        });
+
+        // Handle logout
+        async function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                const result = await window.kaizenAuth.signOut();
+                if (result.success) {
+                    window.location.href = 'index.html';
+                } else {
+                    alert('Error logging out. Please try again.');
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .account-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+
+        .account-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .account-card h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: #111827;
+        }
+
+        .account-info .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .account-info .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .info-value {
+            color: #111827;
+        }
+
+        .tier-badge-large {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        .tier-badge-large.tier-free {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .tier-badge-large.tier-pro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+
+        .benefits-list li {
+            padding: 0.5rem 0;
+            color: #374151;
+        }
+
+        .pro-status {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .pro-status h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+        }
+
+        .subscription-details {
+            margin: 1.5rem 0;
+        }
+
+        .manage-subscription-note {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+
+        .password-form {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .account-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+    </style>
+</body>
+</html>

@@ -25,7 +25,15 @@
                     <li><a href="techniques.html">Techniques</a></li>
                     <li><a href="pricing.html">Pricing</a></li>
                 </ul>
-                <button class="btn btn-primary" onclick="openSubscribeModal()">Subscribe</button>
+                <div id="auth-buttons" style="display: none;">
+                    <button class="btn btn-secondary" onclick="window.kaizenAuth.showLoginModal()">Login</button>
+                    <button class="btn btn-primary" onclick="openSubscribeModal()">Subscribe</button>
+                </div>
+                <div id="user-menu" style="display: none;">
+                    <a href="account.html" class="btn btn-secondary">
+                        <span id="user-email"></span> (<span id="user-tier-badge" class="tier-badge"></span>)
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
@@ -113,8 +121,153 @@
         </div>
     </div>
 
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="window.kaizenAuth.closeAuthModal()">&times;</span>
+            
+            <!-- Login Form -->
+            <div id="login-form-container">
+                <h2>Login to Access Pro Content</h2>
+                <p>Login to read Pro articles and manage your account.</p>
+                <form id="login-form" class="auth-form">
+                    <input
+                        type="email"
+                        id="login-email"
+                        placeholder="your.email@example.com"
+                        required
+                        class="form-input"
+                    >
+                    <input
+                        type="password"
+                        id="login-password"
+                        placeholder="Password"
+                        required
+                        minlength="6"
+                        class="form-input"
+                    >
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                </form>
+                <div id="login-message" class="form-message"></div>
+                <p class="form-footer">
+                    Don't have an account?
+                    <a href="#" onclick="window.kaizenAuth.showSignupForm(); return false;">Sign up</a>
+                </p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signup-form-container" style="display: none;">
+                <h2>Create Account</h2>
+                <p>Join kAIzen Systems to access Pro content.</p>
+                <form id="signup-form" class="auth-form">
+                    <input
+                        type="email"
+                        id="signup-email"
+                        placeholder="your.email@example.com"
+                        required
+                        class="form-input"
+                    >
+                    <input
+                        type="password"
+                        id="signup-password"
+                        placeholder="Password (min 6 characters)"
+                        required
+                        minlength="6"
+                        class="form-input"
+                    >
+                    <input
+                        type="password"
+                        id="signup-confirm-password"
+                        placeholder="Confirm Password"
+                        required
+                        minlength="6"
+                        class="form-input"
+                    >
+                    <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+                </form>
+                <div id="signup-message" class="form-message"></div>
+                <p class="form-footer">
+                    Already have an account?
+                    <a href="#" onclick="window.kaizenAuth.showLoginForm(); return false;">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/supabase-client.js"></script>
+    <script src="js/auth.js"></script>
     <script type="module" src="js/newsletter.js"></script>
     <script src="js/modal.js"></script>
+    
+    <script>
+        // Handle login form submission
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const messageDiv = document.getElementById('login-message');
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Logging in...';
+            messageDiv.innerHTML = '';
+            
+            const result = await window.kaizenAuth.signIn(email, password);
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Login';
+            
+            if (result.success) {
+                messageDiv.innerHTML = '✓ Login successful!';
+                messageDiv.className = 'form-message success';
+                setTimeout(() => {
+                    window.kaizenAuth.closeAuthModal();
+                    window.location.reload();
+                }, 1000);
+            } else {
+                messageDiv.innerHTML = `✗ ${result.error}`;
+                messageDiv.className = 'form-message error';
+            }
+        });
+
+        // Handle signup form submission
+        document.getElementById('signup-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const messageDiv = document.getElementById('signup-message');
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            if (password !== confirmPassword) {
+                messageDiv.innerHTML = '✗ Passwords do not match';
+                messageDiv.className = 'form-message error';
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+            messageDiv.innerHTML = '';
+            
+            const result = await window.kaizenAuth.signUp(email, password);
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Account';
+            
+            if (result.success) {
+                messageDiv.innerHTML = '✓ Account created! You can now access Pro content after upgrading.';
+                messageDiv.className = 'form-message success';
+                setTimeout(() => {
+                    window.kaizenAuth.closeAuthModal();
+                    window.location.reload();
+                }, 2000);
+            } else {
+                messageDiv.innerHTML = `✗ ${result.error}`;
+                messageDiv.className = 'form-message error';
+            }
+        });
+    </script>
 </body>
 </html>
